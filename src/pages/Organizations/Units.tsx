@@ -33,7 +33,7 @@ function Units() {
   const columns: GridColDef[] = [
     {
       field: "name",
-      headerName: "Unit Name",
+      headerName: "departmen",
       flex: 1,
       minWidth: 200,
     },

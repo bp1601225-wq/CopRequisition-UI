@@ -44,7 +44,7 @@ function DataTable({
              HEADER
           ========================= */
           "& .MuiDataGrid-columnHeaders": {
-            backgroundColor: "#05101b",
+            backgroundColor: "#0a0ac6",
             borderBottom: "1px solid #e2e8f0",
           },
 

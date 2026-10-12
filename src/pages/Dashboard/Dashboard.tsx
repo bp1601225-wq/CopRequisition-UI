@@ -177,14 +177,14 @@ if (loading) {
 </div>
 
       {/* Main Content */}
-      <MotionSection delay={0.1}>
+      {/* <MotionSection delay={0.1}>
       <DashboardWorkSection />
-      </MotionSection>
+      </MotionSection> */}
 
       {/* Bottom Section */}
-      <MotionSection delay={0.15}>
+      {/* <MotionSection delay={0.15}>
      <DashboardBottomSection />
-      </MotionSection>
+      </MotionSection> */}
     </div>
   );
 }

@@ -1,0 +1,13 @@
+Dashboard
+My Requisitions
+Requisitions
+Pending Approvals
+Audit
+Finance
+Stores
+Departments
+Users
+Reports
+
+----------------
+Settings

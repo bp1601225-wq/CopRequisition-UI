@@ -78,7 +78,7 @@ return (
     </div>
 
     <Button
-    onClick={()=>setIsOpenPanel("Units")}
+    onClick={()=>setIsOpenPanel("departments")}
       variant="contained"
       startIcon={<Plus size={14} />}
       sx={{
@@ -95,7 +95,7 @@ return (
         },
       }}
     >
-      Add Unit
+      Add Departments
     </Button>
   </div>
 
@@ -215,7 +215,7 @@ return (
 </div>
 </MotionSection>
 
-        {isOpenPanel === "Units" && <>
+        {isOpenPanel === "departments" && <>
         <ModalOpen isOpen = {!!isOpenPanel} 
         onClose={()=>setIsOpenPanel("")}>
         <UnitsScreen />

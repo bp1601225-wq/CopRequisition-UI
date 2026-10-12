@@ -32,14 +32,14 @@ currentUser: JSON.parse(localStorage.getItem("user") || "null"),
       });
 
 
-    //   console.log(response.data)
+      console.log(response)
 
       
       const { data, success } = response.data
 
       const {token, user} = data
 
-    //   console.log(user, token)
+//   console.log(user, token)
 
      if (success === true) {
   console.log("USER FROM BACKEND:", user);

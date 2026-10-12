@@ -28,16 +28,27 @@ export interface PositionType {
 
 export interface StaffFormData  {
   id?:string
-  name: string;
-  email: string;
+  firstname: string;
+  middlename?: string;
+  lastname: string;
   phone: string;
-  positionId: string;
-  unitId: string;
-  role: string;
+  email:string
+  // positionId: string;
+  // unitId: string;
+  role: "STAFF"|"HOD"|"STORES"|"AUDIT"|"FINANCE"|"ADMIN";
   password: string;
   confirmPassword?: string;
 };
 
-export interface DeliverablesComments {
-  comments: string
-}
+
+export interface  RequisitionItemForm  {
+description: string;
+quantityRequested: number;
+};
+
+
+export interface RequisitionFormData {
+reason: string;
+items: RequisitionItemForm[];
+};
+
