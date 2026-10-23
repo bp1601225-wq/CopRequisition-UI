@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import API, { handleAxiosError } from "../configuration/API";
 import { toast } from "sonner";
+import type { StaffFormData } from "../../GlobalTypes";
 
 type User = {
   id: string;
@@ -10,7 +11,7 @@ type User = {
 };
 
 type AuthType = {
-    currentUser: User | null;
+    currentUser: StaffFormData | null;
     
   token: string | null;
 

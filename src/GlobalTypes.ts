@@ -17,7 +17,6 @@ export interface UnitType {
   description?: string;
 
 }
-
 export interface PositionType {
   id: string;
   name: string;
@@ -41,7 +40,7 @@ export interface StaffFormData  {
 };
 
 
-export interface  RequisitionItemForm  {
+export interface RequisitionItemForm  {
 description: string;
 quantityRequested: number;
 };
@@ -52,3 +51,7 @@ reason: string;
 items: RequisitionItemForm[];
 };
 
+
+// export interface isAllowedStatus {
+//   status: "FINANCE_APPROVED"|"AUDIT_CERTIFIED"
+// };

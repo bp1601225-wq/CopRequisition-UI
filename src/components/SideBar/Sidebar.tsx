@@ -3,12 +3,9 @@ import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard,
   ClipboardList,
-  Clock,
-  ClipboardCheck,
   ShieldCheck,
   Wallet,
   Package,
-  Building2,
   Users,
   BarChart3,
   Settings,
@@ -16,11 +13,16 @@ import {
   ChevronRight,
   X,
 } from "lucide-react";
+import { useAuthStore } from "../ZustandShare/AuthZuts";
 
 type SidebarProps = {
   sidebarOpen: boolean;
   setSidebarOpen: React.Dispatch<React.SetStateAction<boolean>>;
 };
+
+
+
+
 
 const navigation = [
   {
@@ -28,11 +30,11 @@ const navigation = [
     to: "/dashboard",
     icon: LayoutDashboard,
   },
-  {
-    label: "My Requisitions",
-    to: "/my-requisitions",
-    icon: ClipboardList,
-  },
+  // {
+  //   label: "My Requisitions",
+  //   to: "/my-requisitions",
+  //   icon: ClipboardList,
+  // },
   {
     label: "Requisitions",
     icon: ClipboardList,
@@ -48,16 +50,21 @@ const navigation = [
     ],
   },
 
-  {
-    label: "Pending Approvals",
-    to: "/pending-approvals",
-    icon: Clock,
-  },
+  // {
+  //   label: "Pending Approvals",
+  //   to: "/pending-approvals",
+  //   icon: Clock,
+  // },
   {
     label: "Audit",
     to: "/audit",
     icon: ShieldCheck,
-  },
+    },
+  // {
+  //   label: "Test Sample",
+  //   to: "/test-sample",
+  //   icon: ShieldCheck,
+  // },
   {
     label: "Finance",
     to: "/finance",
@@ -99,6 +106,15 @@ function SidebarComponent({
   sidebarOpen,
   setSidebarOpen,
 }: SidebarProps) {
+
+
+
+
+
+const {currentUser} = useAuthStore()
+
+
+
   const [openMenu, setOpenMenu] = useState<string | null>(null);
 
   const handleMenuToggle = (label: string) => {
@@ -127,13 +143,25 @@ function SidebarComponent({
       {/* Sidebar Header */}
       <div className="flex h-16 items-center justify-between border-b border-slate-100 px-5">
         <div>
-          <h1 className="text-base font-bold text-blue-900">
-            COP
-          </h1>
+        <div className="flex flex-col gap-1">
+  <h1 className="text-base font-bold tracking-tight text-blue-900 mt-2">
+    {[
+      currentUser?.firstname,
+      currentUser?.middlename,
+      currentUser?.lastname,
+    ]
+      .filter(Boolean)
+      .join(" ")}
+  </h1>
 
-          <p className="text-[11px] text-slate-500">
+  <span className="w-fit rounded-md bg-orange-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-orange-600">
+    {currentUser?.role}
+  </span>
+</div>
+
+          {/* <p className="text-[11px] text-slate-500">
             Internal Requisition System
-          </p>
+          </p> */}
         </div>
 
         <button

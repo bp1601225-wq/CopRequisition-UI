@@ -53,13 +53,10 @@ interface FiltersProps {
 }
 
 export function Filters({
-  searchLabel ,
-  searchPlaceholder ,
-  statusLabel ,
-  fromDateLabel,
-  toDateLabel,
-        legendLabel
-
+  searchLabel,
+  searchPlaceholder,
+  statusLabel,
+  legendLabel,
 }: FiltersProps) {
   return (
     <fieldset className="rounded-md border border-gray-200 bg-white px-3 pb-3 pt-1">
@@ -67,12 +64,7 @@ export function Filters({
         {legendLabel}
       </legend>
 
-      {/* <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-2 "> */}
-
-
-<div className="grid grid-cols-1 gap-3 sm:grid-cols-[2fr_1fr]">
-
-
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {/* Search */}
         <div className="space-y-1">
           <label className="text-xs font-medium text-gray-600">
@@ -101,15 +93,19 @@ export function Filters({
 
           <select
             defaultValue=""
-            className="h-9  rounded-md border border-gray-200 bg-white px-3 text-xs text-gray-700 outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-100"
+            className="h-9 w-full rounded-md border border-gray-200 bg-white px-3 text-xs text-gray-700 outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-100"
           >
             <option value="">All Statuses</option>
-            <option value="ACTIVE">Active</option>
-            <option value="INACTIVE">In Active</option>
-          
+            <option value="DRAFT">Draft</option>
+            <option value="SUBMITTED">Submitted</option>
+            <option value="HOD_APPROVED">HOD Approved</option>
+            <option value="AUDIT_CERTIFIED">Audit Certified</option>
+            <option value="FINANCE_APPROVED">Finance Approved</option>
+            <option value="ISSUED">Issued</option>
+            <option value="COMPLETED">Completed</option>
+            <option value="REJECTED">Rejected</option>
           </select>
         </div>
-
       </div>
     </fieldset>
   );

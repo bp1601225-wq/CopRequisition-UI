@@ -10,10 +10,12 @@ import DashboardSummary from '../pages/Dashboard/Dashboard'
 import SettingsScreen from '../pages/Settings/Settings'
 import Login from '../pages/Login/Login'
 import StaffList from '../pages/Staffs_Information/StaffList'
-import RequisitionInformation from '../pages/Requisition/Requisition'
 import RequisitionList from '../pages/Requisition/RequisitionList'
 import RequisitionDetails from '../pages/Requisition/RequisitionDetails'
 import StoresCosting from '../pages/Stores/Stores'
+import AuditComponent from '../pages/Audits/Audits'
+import Finance from '../pages/Finance/Finance'
+import RequsitionManagement from '../pages/Requisition/RequisitionManagement'
 
 export function AppRoutes() {
 return (
@@ -24,7 +26,8 @@ return (
       <Route element={<AppLayout />}>
 
         {/* <Route path="/pending-review" element={<PendingReview />} /> */}
-        <Route path="/create-request" element={<RequisitionInformation />} />
+        
+        <Route path="/create-request" element={<RequsitionManagement />} />
 
    <Route path="/requisitions-list" element={<RequisitionList />} />
 
@@ -44,10 +47,14 @@ return (
 
         <Route path="/test" element={<RequisitionDetails />} />
 
+
+
+
         <Route path="/stores" element={<StoresCosting />} />
 
+        <Route path="/audit" element={<AuditComponent />} />
 
-
+        <Route path="/finance" element={<Finance />} />
 
 
         <Route path="/dashboard" element={<Dashboard />} />

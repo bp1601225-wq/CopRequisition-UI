@@ -1,322 +1,633 @@
 
-import { useState } from "react";
-import { Calculator, Package, Save } from "lucide-react";
-
-type RequisitionItem = {
-id: string;
-description: string;
-quantityRequested: number;
-quantityAvailable: number | "";
-unitCost: number | "";
-};
+import { useEffect, useMemo, useState } from "react";
+import { useRequisitionStore } from "../../components/ZustandShare/RequisitionZuts";
+import { ClipboardCheck, ClipboardList, Search } from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@mui/material";
+import FinanceApprovedIssuance, { ButtonCodes } from "./IssuanceFromFinance";
 
 function StoresCosting() {
-// TODO: Replace this mock requisition with data from your API.
-const [requisition] = useState({
-id: "1",
-requisitionNo: "REQ-20261011",
-requestedBy: "John Mensah",
-department: "Information Technology",
-status: "HOD_APPROVED",
-items: [
-{
-id: "1",
-description: "A4 Paper",
-quantityRequested: 10,
-quantityAvailable: 10,
-unitCost: 50,
-},
-{
-id: "2",
-description: "HP Toner Cartridge",
-quantityRequested: 2,
-quantityAvailable: 2,
-unitCost: 350,
-},
-{
-id: "3",
-description: "USB Keyboard",
-quantityRequested: 5,
-quantityAvailable: 5,
-unitCost: 80,
-},
-],
-});
 
-const [items, setItems] = useState<RequisitionItem[]>(
-requisition.items
-);
+type isAllowedStatus = "HOD_APPROVED" | "FINANCE_APPROVED"|"AUDIT_CERTIFIED"
 
-// Update the selected field of the selected item.
-const updateItem = (
+
+
+
+const { Requisitions, GetRequisitions } = useRequisitionStore();
+
+const [selectedUser, setSelectedUser] = useState<any>(null);
+const [selectedRequisition, setSelectedRequisition] = useState<any>(null);
+const [storesCost, setStoresCost] = useState<any[]>([]);
+
+const [loading, setLoading] = useState<boolean>(false)
+
+
+const allowed: isAllowedStatus[] = [
+  "HOD_APPROVED",
+  "FINANCE_APPROVED",
+  // "AUDIT_CERTIFIED",
+];
+
+useEffect(() => {
+
+GetRequisitions(undefined, undefined, allowed);
+}, [GetRequisitions]);
+
+
+const {StoresOperation} = useRequisitionStore()
+
+// Group requesters, but keep their requisitions separate
+const groupedRequisitions = useMemo(() => {
+return Requisitions.reduce((acc: any, curr: any) => {
+const phone = curr.createdBy?.phone;
+
+if (!phone) return acc;
+
+if (!acc[phone]) {
+acc[phone] = {
+firstname: curr.createdBy.firstname ?? "",
+lastname: curr.createdBy.lastname ?? "",
+middlename: curr.createdBy.middlename ?? "",
+email: curr.createdBy.email ?? "",
+phone,
+requisitions: [],
+};
+}
+
+// Keep the complete requisition, including its own ID and items
+acc[phone].requisitions.push(curr);
+
+return acc;
+}, {});
+}, [Requisitions]);
+
+const Values = Object.entries(groupedRequisitions);
+
+
+
+// console.log(`All rreq is`, Requisitions)
+
+
+
+
+// Handle input changes
+function HandleStoresCalculation(
 id: string,
-field: "quantityAvailable" | "unitCost",
-value: string
-) => {
-    
-setItems((currentItems) =>
-currentItems.map((item) => {
-// If this is not the item we want, leave it unchanged.
-if (item.id !== id) {
-    return item;
+field: string,
+value: string,
+quantityRequested: number
+) {
+
+
+setStoresCost((previous: any[]) => {
+
+const existingItem = previous.find((item: any) => item.id === id);
+
+if (existingItem) {
+return previous.map((item: any) =>
+item.id === id
+? { ...item, [field]: value }
+: item
+);
 }
 
-// Update the unit cost.
-if (field === "unitCost") {
-    return {
-    ...item,
-
-
-    // s the value empty, if yes keep empty, if no convert value to that number
-    unitCost: value === "" ? "" : Number(value),
-    };
+return [
+...previous,
+{ id, quantityRequested, [field]: value },
+];
+});
 }
 
-// Otherwise, update the available quantity.
-return {
-    ...item,
-    quantityAvailable: value === "" ? "" : Number(value),
-};
-})
+// Validate the items in the selected requisition only
+function Proceed() {
+if (!selectedRequisition) {
+toast.warning("Please select a requisition");
+return;
+}
+
+if (selectedRequisition.items.length === 0) {
+toast.warning("This requisition has no items");
+return;
+}
+
+const HasEveryValue = selectedRequisition.items.every((item: any) => {
+const costItem = storesCost.find(
+(cost: any) => cost.id === item.id
 );
-};
 
-// Calculate the total cost of all items.
-const totalCost = items.reduce(
-(sum, item) =>
-sum +
-(Number(item.quantityAvailable) || 0) *
-(Number(item.unitCost) || 0),
-0
-);
+if (!costItem) return false;
 
-// Format amounts as Ghana cedis.
-const formatCurrency = (amount: number) =>
-new Intl.NumberFormat("en-GH", {
-style: "currency",
-currency: "GHS",
-minimumFractionDigits: 2,
-}).format(amount);
-
-const handleSave = () => {
-  // Check whether any item has invalid costing information.
-  const invalidItems = items.some(
-    (item) =>
-      item.quantityAvailable === "" ||
-      item.unitCost === "" ||
-      !Number.isFinite(Number(item.quantityAvailable)) ||
-      !Number.isFinite(Number(item.unitCost)) ||
-      Number(item.quantityAvailable) < 0 ||
-      Number(item.unitCost) < 0 ||
-      !Number.isInteger(Number(item.quantityAvailable)) ||
-      Number(item.quantityAvailable) > item.quantityRequested
-  );
-
-  if (invalidItems) {
-    alert(
-      "Please enter valid quantities and unit costs. Available quantity must be a whole number and cannot exceed the requested quantity."
-    );
-    return;
-  }
-
-  // Prepare the payload for the backend.
-  const payload = {
-    requisitionId: requisition.id,
-    items: items.map((item) => ({
-      id: item.id,
-      quantityIssued: Number(item.quantityAvailable),
-      unitCost: Number(item.unitCost),
-      totalCost:
-        Number(item.quantityAvailable) * Number(item.unitCost),
-    })),
-  };
-
-  // Display the payload in the browser console.
-  console.log("Stores Costing Payload:", payload);
-
-  // Display the payload as formatted JSON.
-  console.log(
-    "JSON Payload:",
-    JSON.stringify(payload, null, 2)
-  );
-
-  alert("Payload logged successfully. Check your browser console.");
-};
+const quantityIssued = Number(costItem.quantityIssued);
+const unitCost = Number(costItem.unitCost);
 
 return (
-<div className="space-y-4 bg-white text-slate-800">
-{/* HEADER */}
-<div className="flex items-center justify-between border-b border-slate-200 pb-3">
-<div className="flex items-center gap-2">
-    <div className="rounded-md bg-blue-50 p-2 text-blue-900">
-    <Calculator size={18} />
-    </div>
+costItem.quantityIssued !== undefined &&
 
-    <div>
-    <h2 className="text-sm font-semibold text-slate-900">
-        Stores Costing
-    </h2>
-    <p className="text-[11px] text-slate-500">
-        Confirm availability and calculate item costs.
-    </p>
-    </div>
+costItem.quantityIssued !== "" &&
+
+Number.isInteger(quantityIssued) &&
+
+quantityIssued >= 0 &&
+
+quantityIssued <= item.quantityRequested &&
+
+costItem.unitCost !== undefined &&
+
+costItem.unitCost !== "" &&
+
+Number.isFinite(unitCost) &&
+
+unitCost >= 0
+);
+});
+
+if (!HasEveryValue) {
+toast.warning("Please complete the costing for every item");
+return;
+}
+
+SendPayload();
+}
+
+// Prepare costing for the selected requisition only
+function SendPayload() {
+if (!selectedRequisition) return;
+
+try {
+setLoading(true)
+
+
+const Payload = {
+RequisitionId: selectedRequisition.id,
+
+items: selectedRequisition.items.map((item: any) => {
+const costItem = storesCost.find(
+(cost: any) => cost.id === item.id
+);
+
+const quantityIssued = Number(costItem.quantityIssued);
+const unitCost = Number(costItem.unitCost);
+
+return {
+id: item.id,
+quantityRequested: item.quantityRequested,
+quantityIssued,
+unitCost,
+totalCost: quantityIssued * unitCost,
+};
+}),
+};
+
+
+console.log("Data ready for backend:", Payload);
+StoresOperation(Payload)
+
+} catch (error) {
+// store handles errors
+
+} finally {
+setLoading(false)
+}
+
+}
+
+// Calculate estimated total for the selected requisition
+const estimatedTotal = selectedRequisition
+? selectedRequisition.items.reduce((total: number, item: any) => {
+const costItem = storesCost.find(
+(cost: any) => cost.id === item.id
+);
+
+return (
+total +
+Number(costItem?.quantityIssued || 0) *
+Number(costItem?.unitCost || 0)
+);
+}, 0)
+: 0;
+
+return (
+<div className="flex h-full min-h-0 flex-col overflow-hidden text-sm text-gray-800">
+<div className="grid min-h-0 flex-1 grid-cols-1 gap-3 overflow-hidden lg:grid-cols-[250px_minmax(0,1fr)]">
+
+{/* LEFT PANEL */}
+<aside className="flex min-h-0 flex-col overflow-hidden rounded-lg border border-gray-200 bg-white">
+<div className="shrink-0 border-b border-gray-200 px-3 py-3">
+<div className="flex items-center justify-between">
+<div>
+
+
+<div className="space-y-2 flex items-end gap-2">
+    <Search size={16} className="text-gray-400" />
+
+  <input
+    type="text"
+    placeholder="Search by name or phone..."
+    className="text-xs w-full rounded-md border border-emerald-700 px-2 py-1 text-sm outline-none focus:border-emerald-900"
+  />
 </div>
 
-<span className="rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-[10px] font-semibold text-blue-700">
-    HOD Approved
+
+
+
+</div>
+
+<span className="rounded-md bg-orange-50 px-2 py-1 text-xs font-semibold text-orange-600">
+{Values.length}
 </span>
 </div>
-
-{/* REQUISITION INFORMATION */}
-<div className="grid grid-cols-2 gap-3">
-<div className="rounded-md border border-slate-200 p-3">
-    <p className="text-[10px] text-slate-500">
-    Requisition Number
-    </p>
-    <p className="mt-1 text-xs font-semibold text-slate-900">
-    {requisition.requisitionNo}
-    </p>
 </div>
 
-<div className="rounded-md border border-slate-200 p-3">
-    <p className="text-[10px] text-slate-500">Requested By</p>
-    <p className="mt-1 text-xs font-medium text-slate-900">
-    {requisition.requestedBy}
-    </p>
+<div className="shrink-0 border-b border-gray-100 px-3 py-2">
+<p className="text-xs text-gray-500">
+Select a requisition under a requester
+</p>
 </div>
 
-<div className="col-span-2 rounded-md border border-slate-200 p-3">
-    <p className="text-[10px] text-slate-500">Department</p>
-    <p className="mt-1 text-xs font-medium text-slate-900">
-    {requisition.department}
-    </p>
-</div>
-</div>
+<div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+{Values.map(([phone, requester]: [string, any]) => (
+<div key={phone} className="border-b border-gray-100">
 
-{/* ITEM COSTING */}
-<div className="overflow-hidden rounded-md border border-slate-200">
-<div className="flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-3 py-2">
-    <Package size={14} className="text-blue-900" />
-    <h3 className="text-xs font-semibold text-slate-800">
-    Item Costing
-    </h3>
-</div>
-
-<div className="overflow-x-auto">
-    <table className="w-full min-w-[600px] text-left">
-    <thead className="border-b border-slate-200 bg-white">
-        <tr className="text-[10px] text-slate-500">
-        <th className="px-3 py-2 font-medium">Item</th>
-        <th className="px-3 py-2 font-medium">
-            Qty Requested
-        </th>
-        <th className="px-3 py-2 font-medium">
-            Qty Available
-        </th>
-        <th className="px-3 py-2 font-medium">
-            Unit Cost (GH₵)
-        </th>
-        <th className="px-3 py-2 text-right font-medium">
-            Total (GH₵)
-        </th>
-        </tr>
-    </thead>
-
-    <tbody className="divide-y divide-slate-100">
-        {items.map((item) => {
-        const lineTotal =
-            (Number(item.quantityAvailable) || 0) *
-            (Number(item.unitCost) || 0);
-
-        return (
-            <tr
-            key={item.id}
-            className="hover:bg-slate-50/70"
-            >
-            <td className="px-3 py-3 text-xs font-medium text-slate-800">
-                {item.description}
-            </td>
-
-            <td className="px-3 py-3 text-xs text-slate-600">
-                {item.quantityRequested}
-            </td>
-
-            <td className="px-3 py-3">
-                <input
-                type="number"
-                min="0"
-                max={item.quantityRequested}
-                step="1"
-                value={item.quantityAvailable}
-                onChange={(e) =>
-                    updateItem(
-                    item.id,
-                    "quantityAvailable",
-                    e.target.value
-                    )
-                }
-                className="w-20 rounded-md border border-slate-300 px-2 py-1.5 text-xs outline-none focus:border-blue-900 focus:ring-1 focus:ring-blue-900"
-                />
-            </td>
-
-            <td className="px-3 py-3">
-                <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={item.unitCost}
-                onChange={(e) =>
-                    updateItem(
-                    item.id,
-                    "unitCost",
-                    e.target.value
-                    )
-                }
-                className="w-24 rounded-md border border-slate-300 px-2 py-1.5 text-xs outline-none focus:border-blue-900 focus:ring-1 focus:ring-blue-900"
-                />
-            </td>
-
-            <td className="px-3 py-3 text-right text-xs font-semibold text-slate-900">
-                {formatCurrency(lineTotal)}
-            </td>
-            </tr>
-        );
-        })}
-    </tbody>
-    </table>
-</div>
-</div>
-
-{/* TOTAL COST */}
-<div className="flex items-center justify-between rounded-md border border-amber-200 bg-amber-50/60 p-4">
-<div>
-    <p className="text-[11px] font-medium text-slate-600">
-    Estimated Total Cost
-    </p>
-    <p className="mt-1 text-lg font-semibold text-slate-900">
-    {formatCurrency(totalCost)}
-    </p>
-</div>
-
-<div className="rounded-md bg-white p-2 text-amber-700">
-    <Calculator size={20} />
-</div>
-</div>
-
-{/* SAVE COSTING */}
+{/* Requester heading */}
 <button
 type="button"
-onClick={handleSave}
-className="flex w-full items-center justify-center gap-2 rounded-md bg-blue-900 px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-blue-800"
+onClick={() => {
+setSelectedUser(requester);
+setSelectedRequisition(null);
+}}
+className={`w-full border-l-2 px-3 py-3 text-left hover:bg-orange-50/60 ${
+selectedUser?.phone === phone
+? "border-l-orange-500 bg-orange-50"
+: "border-l-transparent"
+}`}
 >
-<Save size={15} />
-Save Costing &amp; Send to Audit
+<p className="truncate font-medium text-gray-800">
+{requester.firstname} {requester.lastname}
+</p>
+
+<p className="mt-0.5 truncate text-xs text-gray-500">
+{requester.email || phone}
+</p>
+
+<div className="mt-2 flex items-center justify-between gap-2">
+<span className="text-xs text-gray-500">
+{requester.requisitions.length} requisitions
+</span>
+
+<span className="rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600">
+{phone}
+</span>
+</div>
 </button>
 
-<p className="text-[10px] leading-4 text-slate-500">
-Check all quantities and unit costs before submitting. Internal
-Audit will verify the calculations before Finance approval.
+{/* Individual requisitions */}
+
+{selectedUser?.phone === phone && (
+<div className="h-35 border-t border-slate-200 bg-slate-50/70 p-2">
+<div className="mb-2 px-2">
+<p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+Requisitions
 </p>
+</div>
+
+<div className="space-y-1.5">
+{requester.requisitions.map((req: any) => (
+<button
+key={req.id}
+type="button"
+onClick={() => setSelectedRequisition(req)}
+className={`group w-full rounded-md border px-3 py-2.5 text-left transition-colors ${
+selectedRequisition?.id === req.id
+  ? "border-blue-200 bg-white shadow-sm ring-1 ring-blue-100"
+  : "border-transparent bg-transparent hover:border-slate-200 hover:bg-white"
+}`}
+>
+<div className="flex items-center justify-between gap-3">
+<div className="flex min-w-0 items-center gap-2">
+  <div
+    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded ${
+      selectedRequisition?.id === req.id
+        ? "bg-blue-50 text-blue-700"
+        : "bg-white text-slate-500 group-hover:bg-slate-100"
+    }`}
+  >
+    <ClipboardCheck size={15} />
+  </div>
+
+  <div className="min-w-0">
+    <p
+      className={`truncate text-xs font-semibold ${
+        selectedRequisition?.id === req.id
+          ? "text-blue-800"
+          : "text-slate-700"
+      }`}
+    >
+      {req.requisitionNo}
+    </p>
+
+    <p className="mt-0.5 text-[11px] text-slate-500">
+      {req.items?.length ?? 0}{" "}
+      {(req.items?.length ?? 0) === 1 ? "item" : "items"}
+    </p>
+  </div>
+</div>
+
+<div className="flex shrink-0 items-center gap-2">
+  <span className="rounded bg-slate-100 px-2 py-1 text-[10px] font-medium text-slate-600">
+    {req.status?.replaceAll("_", " ") ?? "Unknown"}
+  </span>
+
+  {selectedRequisition?.id === req.id && (
+    <span className="h-2 w-2 rounded-full bg-blue-600" />
+  )}
+</div>
+</div>
+</button>
+))}
+</div>
+</div>
+)}
+
+</div>
+))}
+
+{Values.length === 0 && (
+<p className="px-3 py-6 text-center text-xs text-gray-500">
+No requisitions found.
+</p>
+)}
+</div>
+
+<div className="shrink-0 border-t border-gray-200 bg-gray-50 px-3 py-2">
+<p className="text-xs text-gray-500">
+{Values.length} unique requesters
+</p>
+</div>
+</aside>
+
+{/* RIGHT PANEL */}
+<section className="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-lg border border-gray-200 bg-white">
+
+{/* HEADER */}
+<div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-gray-200 px-4 py-3">
+<div className="min-w-0">
+<h2 className="font-semibold">Stores Costing</h2>
+
+{selectedRequisition && (
+<span className="mt-2 inline-block rounded bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
+{selectedRequisition.status}
+</span>
+)}
+
+<p className="mt-1 truncate text-xs text-gray-500">
+{selectedRequisition
+? `${selectedUser.firstname} ${selectedUser.lastname} · ${selectedRequisition.requisitionNo}`
+: "Select a requisition from the left panel"}
+</p>
+</div>
+</div>
+
+{/* SUMMARY */}
+<div className="grid shrink-0 grid-cols-2 gap-2 border-b border-gray-100 bg-gray-50/60 px-3 py-3 sm:grid-cols-3">
+<div className="rounded-md bg-white px-3 py-2">
+<p className="text-xs text-gray-500">Total items</p>
+
+<p className="mt-1 flex items-center gap-3 text-base font-semibold">
+<ClipboardList size={18} />
+{selectedRequisition?.items.length ?? 0}
+</p>
+</div>
+
+
+{/* <div className="col-span-2 rounded-md bg-white px-3 py-2 sm:col-span-1">
+<p className="text-xs text-gray-500">Estimated total</p>
+
+<p className="mt-1 text-base font-semibold text-orange-600">
+GH₵ {estimatedTotal.toFixed(2)}
+</p>
+</div>
+ */}
+
+
+
+
+
+
+
+</div>
+
+{/* CONTENT */}
+<div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+<div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
+<div>
+<h3 className="font-medium">Requisition items</h3>
+<p className="mt-0.5 text-xs text-gray-500">
+Review quantities and enter costing details
+</p>
+</div>
+</div>
+
+
+
+
+{!selectedRequisition ? (
+  <div className="mx-4 mb-4 flex min-h-40 flex-col items-center justify-center rounded-md border border-dashed border-gray-300 px-4 text-center">
+    <p className="text-sm font-medium text-gray-600">
+      No requisition selected
+    </p>
+
+    <p className="mt-1 text-xs text-gray-500">
+      Select a requisition under a requester to view its items.
+    </p>
+  </div>
+) : selectedRequisition.items.length === 0 ? (
+  <div className="px-4 py-10 text-center text-xs text-gray-500">
+    This requisition has no items.
+  </div>
+) : selectedRequisition.status === "FINANCE_APPROVED" ? (
+  /* Finance Approval Issuance */
+  <FinanceApprovedIssuance
+    requisition={selectedRequisition}
+  />
+) : (
+  /* Costing Table */
+  <div className="h-[400px] overflow-auto border-y border-gray-200">
+    <table className="w-full min-w-[720px] border-collapse text-left text-xs">
+      <thead className="sticky top-0 z-10 bg-gray-50 text-gray-600">
+        <tr>
+          <th className="px-3 py-2.5 font-medium">
+            Item description
+          </th>
+
+          <th className="px-3 py-2.5 text-right font-medium">
+            Qty requested
+          </th>
+
+          <th className="w-28 px-3 py-2.5 font-medium">
+            Qty issued
+          </th>
+
+          <th className="w-32 px-3 py-2.5 font-medium">
+            Unit cost
+          </th>
+
+          <th className="w-32 px-3 py-2.5 text-right font-medium">
+            Total cost
+          </th>
+        </tr>
+      </thead>
+
+      <tbody className="divide-y divide-gray-100">
+        {selectedRequisition.items.map(
+          (item: any, index: number) => {
+            const costItem = storesCost.find(
+              (cost: any) => cost.id === item.id
+            );
+
+            const quantityIssued = Number(
+              costItem?.quantityIssued || 0
+            );
+
+            const unitCost = Number(
+              costItem?.unitCost || 0
+            );
+
+            const totalCost = quantityIssued * unitCost;
+
+            return (
+              <tr
+                key={item.id ?? index}
+                className="hover:bg-gray-50/70"
+              >
+                <td className="px-3 py-3">
+                  <p className="font-medium text-gray-800">
+                    {item.description}
+                  </p>
+                </td>
+
+                <td className="px-3 py-3 text-right tabular-nums">
+                  {item.quantityRequested}
+                </td>
+
+                <td className="px-3 py-3">
+                  <input
+                    type="number"
+                    min="0"
+                    max={item.quantityRequested}
+                    step="1"
+                    placeholder="0"
+                    value={costItem?.quantityIssued ?? ""}
+                    onChange={(e) =>
+                      HandleStoresCalculation(
+                        item.id,
+                        "quantityIssued",
+                        e.target.value,
+                        item.quantityRequested
+                      )
+                    }
+                    className="w-full rounded border border-gray-200 px-2 py-1.5 outline-none focus:border-orange-400"
+                  />
+                </td>
+
+                <td className="px-3 py-3">
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="0.00"
+                    value={costItem?.unitCost ?? ""}
+                    onChange={(e) =>
+                      HandleStoresCalculation(
+                        item.id,
+                        "unitCost",
+                        e.target.value,
+                        item.quantityRequested
+                      )
+                    }
+                    className="w-full rounded border border-gray-200 px-2 py-1.5 outline-none focus:border-orange-400"
+                  />
+                </td>
+
+                <td className="px-3 py-3 text-right font-medium tabular-nums">
+                  {totalCost.toFixed(2)}
+                </td>
+              </tr>
+            );
+          }
+        )}
+      </tbody>
+    </table>
+  </div>
+)}
+
+
+
+
+</div>
+
+{/* FOOTER */}
+<div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-t border-gray-200 bg-white px-4 py-3">
+<p className="text-xs text-gray-500">
+{selectedRequisition
+? `${selectedRequisition.items.length} items in this requisition`
+: "Select a requisition to begin"}
+</p>
+
+{selectedRequisition?.status === "FINANCE_APPROVED" ? 
+
+<>
+
+<ButtonCodes 
+selectedRequisitions = {selectedRequisition}
+/>
+</>
+
+
+:
+
+
+<>
+
+<div className="flex items-center gap-2">
+<Button
+type="button"
+variant="outlined"
+sx={{
+textTransform: "none",
+fontSize: "12px",
+}}
+onClick={() => toast.info("Save draft is not connected yet")}
+>
+Save draft
+</Button>
+
+<Button
+onClick={Proceed}
+color="success"
+variant="outlined"
+sx={{
+textTransform: "none",
+fontSize: "12px",
+}}
+>
+{loading ? "operating ..." : " continue"}
+</Button>
+
+</div>
+
+</>
+
+}
+
+
+
+
+
+</div>
+
+
+</section>
+</div>
 </div>
 );
 }

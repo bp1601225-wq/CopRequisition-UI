@@ -1,13 +1,38 @@
-Dashboard
-My Requisitions
-Requisitions
-Pending Approvals
-Audit
-Finance
-Stores
-Departments
-Users
-Reports
-
-----------------
-Settings
+  {
+  "id": "f6f4f277-0391-4e0d-a08d-e01fa764e687",
+  "requisitionNo": "REQ-1792348996914",
+  "date": "2026-10-18T18:43:16.913Z",
+  "status": "HOD_APPROVED",
+  "reason": "Toner is dying out. We need items to print",
+  "createdAt": "2026-10-18T18:43:16.953Z",
+  "createdBy": {
+    "firstname": "Grace",
+    "middlename": "Baah",
+    "lastname": "BuckMan",
+    "email": "grace@gmail.com",
+    "phone": "0247472201"
+  },
+  "items": [
+    {
+      "id": "ebf0ccd0-09a8-4a3e-a116-9de2e31c390a",
+      "description": "Toner Catridge Black",
+      "quantityRequested": 3,
+      "quantityIssued": null,
+      "unitCost": null
+    },
+    {
+      "id": "9f1f0106-4f06-4465-997c-0053dd640ded",
+      "description": "Toner Catridge White",
+      "quantityRequested": 2,
+      "quantityIssued": null,
+      "unitCost": null
+    },
+    {
+      "id": "f00bfce0-d8bf-4eac-864b-879e39710a22",
+      "description": "Toner Catridge Cyan",
+      "quantityRequested": 3,
+      "quantityIssued": null,
+      "unitCost": null
+    }
+  ]
+}

@@ -420,6 +420,7 @@ return (
       >
         <option value="">Select role</option>
         <option value="STAFF">Staff</option>
+        <option value="ADMIN">Admin</option>
         <option value="HOD">Head of Department</option>
         <option value="STORES">Store Keeper</option>
         <option value="AUDIT">Auditer</option>

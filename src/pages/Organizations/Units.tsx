@@ -157,7 +157,7 @@ function ResetForm() {
 
                 <div>
                   <h2 className="text-xs font-semibold text-slate-900">
-                    Add New Unit
+                    Add New Department
                   </h2>
 
                   <p className="mt-0.5 text-[10px] text-slate-500">

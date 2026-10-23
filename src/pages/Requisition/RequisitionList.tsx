@@ -15,12 +15,14 @@ import {
   FileText,
   CheckCircle,
   Search,
+  ShieldCheck,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRequisitionStore } from "../../components/ZustandShare/RequisitionZuts";
 import { Filters } from "../../utils/utils";
 import RequisitionDetails from "./RequisitionDetails";
 import { Button } from "@mui/material";
+import { useAuthStore } from "../../components/ZustandShare/AuthZuts";
 
 type Requisition = {
   id?: string;
@@ -46,6 +48,8 @@ type Requisition = {
   }[];
 };
 
+
+
 function RequisitionList() {
   const [isLoading, setIsLoading] = useState(false);
   const [isOpenRightPanel, setIsOpenRightPanel] = useState(false);
@@ -53,6 +57,8 @@ function RequisitionList() {
     useState<Requisition | null>(null);
 
   const { Requisitions, GetRequisitions } = useRequisitionStore();
+  const {currentUser} = useAuthStore()
+
 
   useEffect(() => {
     async function LoadRequisitions() {
@@ -68,56 +74,55 @@ function RequisitionList() {
     LoadRequisitions();
   }, [GetRequisitions]);
 
-  const statusConfig: Record<
-    string,
-    {
-      label: string;
-      icon: typeof CircleCheck;
-      className: string;
-    }
-  > = {
-    DRAFT: {
-      label: "Draft",
-      icon: FileEdit,
-      className: "bg-gray-100 text-gray-600 border-gray-200",
-    },
-    SUBMITTED: {
-      label: "Submitted",
-      icon: Send,
-      className: "bg-blue-50 text-blue-600 border-blue-200",
-    },
-    HOD_APPROVED: {
-      label: "HOD Approved",
-      icon: CircleCheck,
-      className: "bg-indigo-50 text-indigo-600 border-indigo-200",
-    },
-    AUDIT_CERTIFIED: {
-      label: "Audit Certified",
-      icon: CircleCheck,
-      className: "bg-violet-50 text-violet-600 border-violet-200",
-    },
-    FINANCE_APPROVED: {
-      label: "Finance Approved",
-      icon: CircleCheck,
-      className: "bg-amber-50 text-amber-700 border-amber-200",
-    },
-    ISSUED: {
-      label: "Issued",
-      icon: PackageCheck,
-      className: "bg-cyan-50 text-cyan-700 border-cyan-200",
-    },
-    COMPLETED: {
-      label: "Completed",
-      icon: CircleCheck,
-      className: "bg-green-50 text-green-600 border-green-200",
-    },
-    REJECTED: {
-      label: "Rejected",
-      icon: XCircle,
-      className: "bg-red-50 text-red-600 border-red-200",
-    },
-  };
-
+ const statusConfig: Record<
+  string,
+  {
+    label: string;
+    icon: typeof CircleCheck;
+    className: string;
+  }
+> = {
+  DRAFT: {
+    label: "Draft",
+    icon: FileEdit,
+    className: "bg-gray-100 text-gray-700 border-gray-300",
+  },
+  SUBMITTED: {
+    label: "Submitted",
+    icon: Send,
+    className: "bg-blue-100 text-blue-800 border-blue-300",
+  },
+  HOD_APPROVED: {
+    label: "HOD Approved",
+    icon: CircleCheck,
+    className: "bg-lime-100 text-lime-800 border-lime-300",
+  },
+  AUDIT_CERTIFIED: {
+    label: "Audit Certified",
+    icon: ShieldCheck,
+    className: "bg-purple-100 text-purple-800 border-purple-300",
+  },
+  FINANCE_APPROVED: {
+    label: "Finance Approved",
+    icon: CircleCheck,
+    className: "bg-orange-100 text-orange-800 border-orange-300",
+  },
+  ISSUED: {
+    label: "Issued",
+    icon: PackageCheck,
+    className: "bg-cyan-100 text-cyan-800 border-cyan-300",
+  },
+  COMPLETED: {
+    label: "Completed",
+    icon: CircleCheck,
+    className: "bg-emerald-100 text-emerald-800 border-emerald-300",
+  },
+  REJECTED: {
+    label: "Rejected",
+    icon: XCircle,
+    className: "bg-rose-100 text-rose-800 border-rose-300",
+  },
+};
   const formatDate = (value?: string) => {
     if (!value) return "N/A";
 
@@ -353,8 +358,10 @@ function RequisitionList() {
           </select>
           
 
+{/* 
+{currentUser?.role === "HOD" && 
 
-                        
+<> */}
           <Button
   variant="outlined"
   color="success"
@@ -374,6 +381,13 @@ function RequisitionList() {
 >
   Approve All 
 </Button>
+
+
+{/* </>
+
+
+}                         */}
+
 
         </div>
 

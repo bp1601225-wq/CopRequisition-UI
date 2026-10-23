@@ -96,7 +96,6 @@ return (
 </div>
 
 {/* REQUISITION DETAILS */}
-{/* REQUISITION DETAILS */}
 <div className="border-b border-slate-200 px-5 py-4">
 <div className="mb-4">
 <h3 className="text-xs font-semibold text-slate-900">

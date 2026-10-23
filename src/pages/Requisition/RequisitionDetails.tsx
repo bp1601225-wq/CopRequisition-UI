@@ -1,3 +1,4 @@
+import { Button, CircularProgress } from "@mui/material";
 import {
   CalendarDays,
   CheckCircle2,
@@ -8,12 +9,22 @@ import {
   Wallet,
   ClipboardList,
 } from "lucide-react";
+import { useRequisitionStore } from "../../components/ZustandShare/RequisitionZuts";
+import { useState } from "react";
 
 function RequisitionDetails({
   selectedRequisition,
   selectedStatus,
 }: any) {
   if (!selectedRequisition) return null;
+
+
+
+
+
+const {ApproveRequisitions} = useRequisitionStore()
+const [loading, setLoading] = useState<boolean>(false)
+
 
   const requisition = selectedRequisition;
   const items = requisition.items ?? [];
@@ -312,6 +323,52 @@ function RequisitionDetails({
                 before Stores can calculate unit costs and total costs.
                 Requested quantities remain available for review.
               </p>
+
+
+
+           <Button
+  onClick={async () => {
+    try {
+      setLoading(true);
+      await ApproveRequisitions(selectedRequisition.id);
+    } catch (error) {
+      // Zustand handles the error
+    } finally {
+      setLoading(false);
+    }
+  }}
+  variant="outlined"
+  color="warning"
+  disabled={loading}
+  startIcon={
+    loading ? (
+      <CircularProgress size={14} color="inherit" />
+    ) : (
+      <CheckCircle2 size={16} />
+    )
+  }
+  sx={{
+    mt: 1,
+    textTransform: "none",
+    fontSize: "12px",
+    fontWeight: 600,
+    borderRadius: 2,
+    px: 2,
+    py: 0.75,
+    borderColor: "#fd7e02",
+    color: "#fd7e02",
+    "&:hover": {
+      backgroundColor: "#fff7ed",
+      borderColor: "#ea7000",
+    },
+    "&.Mui-disabled": {
+      borderColor: "#fed7aa",
+      color: "#fd7e02",
+    },
+  }}
+>
+  {loading ? "Approving..." : "Approve Requisition"}
+</Button>
             </div>
           </div>
         )}
