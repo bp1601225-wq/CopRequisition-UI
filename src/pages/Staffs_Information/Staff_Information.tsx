@@ -28,12 +28,14 @@ register,
 handleSubmit,
 watch,
 reset,
-formState: { errors },
+formState: { errors, isSubmitting },
 } = useForm<StaffFormData>();
 
 // const { Units, GetUnits } = useUnitStore();
 // const { Positions, GetPositions } = usePositionStore();
 const {CreateStaff} = useStaffStore()
+
+
 
   const { currentUser} = useAuthStore()
 
@@ -53,7 +55,7 @@ const ConfirmPassword = watch("confirmPassword");
 
 // Finalize password
 
-const SubmitStaff = (data: StaffFormData) => {
+const SubmitStaff = async (data: StaffFormData) => {
 
 
 
@@ -64,7 +66,7 @@ const {confirmPassword, ...rest} = data
 
 // console.log("STAFF FORM DATA:", rest);
 
-CreateStaff(rest)
+await CreateStaff(rest)
 
 
 // reset()
@@ -572,7 +574,7 @@ return (
       },
     }}
   >
-    Create Staff
+    {isSubmitting ? "Creating ..." : "Create Staff"}
   </Button>
 </div>
 </div>

@@ -75,6 +75,16 @@ string,
 any,
 ][];
 
+
+
+
+
+
+//  Select first requisiton when the component loads
+
+
+
+
 const FilteredValues = Values.filter(([phone, user]) => {
 const name =
 `${user.firstname} ${user.middlename} ${user.lastname}`;
@@ -84,18 +94,42 @@ return `${name} ${user.email} ${phone}`
 .includes(search.toLowerCase());
 });
 
-useEffect(() => {
-if (
-Values.length > 0 &&
-!GroupedRequisitions[SelectedPhone]
-) {
-setSelectedPhone(Values[0][0]);
-}
 
-if (Values.length === 0) {
-setSelectedPhone("");
-}
-}, [Requisitions]);
+
+// Select the first remaining requisition whenever the list changes
+// useEffect(() => {
+//   if (Values.length > 0) {
+//     const [firstPhone, firstUser] = Values[0];
+
+//     setSelectedPhone(firstPhone);
+//     setSelectedRequisition(
+//       firstUser.requisitions[0] ?? null
+//     );
+//   } else {
+//     setSelectedPhone("");
+//     setSelectedRequisition(null);
+//   }
+// }, [Values]);
+
+
+
+
+// useEffect(() => {
+//   if (
+//     Values.length > 0 &&
+//     !GroupedRequisitions[SelectedPhone]
+//   ) {
+//     setSelectedPhone(Values[0][0]);
+//   }
+
+//   if (Values.length === 0) {
+//     setSelectedPhone("");
+//   }
+// }, [Requisitions]);
+
+
+
+
 
 const SelectedUser = GroupedRequisitions[SelectedPhone];
 
@@ -360,7 +394,7 @@ if (!selectedRequisition?.id) return;
 try {
     setLoading(true);
 
-  await FinanceApproval({
+  await FinanceApproval({ 
     requisitionId: selectedRequisition.id,
     comment: comment,
   });
@@ -370,8 +404,10 @@ try {
     // comment: comment,
     // })
 
+  
     setOpenModal(false);
-    setComment("");
+setComment("");
+setSelectedRequisition(undefined);
 
 //   await LoadAllRequisitions();
 } catch (error) {

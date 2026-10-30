@@ -240,7 +240,10 @@ export default function FinanceApprovedIssuance({
 
 // Requisitions footer buttons for finance approved
 
-export function ButtonCodes({ selectedRequisitions }: any) {
+export function ButtonCodes({ selectedRequisitions,
+setSelectedRequisition
+
+ }: any) {
 const [loading, setLoading] = useState(false);
 
   const { RecordIssuiance } = useRequisitionStore();
@@ -253,22 +256,34 @@ const [loading, setLoading] = useState(false);
       type="button"
       variant="contained"
       disabled={loading}
-      onClick={async () => {
-        try {
-          setLoading(true);
 
-          if (!selectedRequisitions?.id) {
-            toast.error("Please select a requisition");
-            return;
-          }
+ onClick={async () => {
+  if (!selectedRequisitions?.id) {
+    toast.error("Please select a requisition");
+    return;
+  }
 
-          await RecordIssuiance(selectedRequisitions.id);
-        } finally {
-          setLoading(false);
-        }
+  try {
+    setLoading(true);
 
-      }}
+    const currentId = selectedRequisitions.id;
+    const currentPhone = selectedRequisitions.createdBy?.phone;
 
+    await RecordIssuiance(currentId);
+
+    // Get the updated list after issuance
+    const remaining = useRequisitionStore.getState().Requisitions;
+
+    // Select the next requisition belonging to the same user
+    const nextRequisition = remaining.find(
+      (req: any) => req.createdBy?.phone === currentPhone
+    );
+
+    setSelectedRequisition(nextRequisition ?? null);
+  } finally {
+    setLoading(false);
+  }
+}}
       sx={{
         textTransform: "none",
         fontSize: "12px",

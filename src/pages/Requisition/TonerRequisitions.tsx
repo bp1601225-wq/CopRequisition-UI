@@ -13,12 +13,21 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useRequisitionStore } from "../../components/ZustandShare/RequisitionZuts";
+
+
+
+
 
 function TonerRequisitions() {
   const [Request, setRequest] = useState<RequisitionItemForm[]>([]);
   const [Reason, setReason] = useState("");
   const [Description, setDescription] = useState("");
   const [Quantity, setQuantity] = useState(1);
+  const [isLoading, setIsLoading] = useState<boolean>(false)
+  
+  const {TonerRequisitions} = useRequisitionStore()
+
 
   function CreateRequest() {
     if (!Description.trim()) {
@@ -55,7 +64,12 @@ function TonerRequisitions() {
     setQuantity(1);
   }
 
-  function SubmitRequest() {
+  async function SubmitRequest() {
+
+    try {
+
+      setIsLoading(true)
+
     if (!Request.length) {
       toast.error("Add at least one toner");
       return;
@@ -66,13 +80,25 @@ function TonerRequisitions() {
       return;
     }
 
-    const Data: RequisitionFormData = {
+    
+    const payload: RequisitionFormData = {
       reason: Reason.trim(),
       items: Request,
+      requisitionType:"TONER"
     };
 
-    console.log("Complete Toner Requisition:", Data);
-    toast.success("Requisition logged to console");
+
+    await TonerRequisitions(payload)
+
+    console.log("Complete Toner Requisition:", payload);
+    // toast.success("Requisition logged to console");
+
+  } catch (error){
+      //  store handles error
+    } finally {
+setIsLoading(false)
+    }
+
   }
 
   const TotalQuantity = Request.reduce(
@@ -318,7 +344,7 @@ function TonerRequisitions() {
               },
             }}
           >
-            Submit Requisition
+            {isLoading ? "Submitting ..." : "Submit Requisition"}
           </Button>
         </div>
 

@@ -1,42 +1,56 @@
-import { Button, CircularProgress } from "@mui/material";
 import {
   CalendarDays,
   CheckCircle2,
-  Clock3,
   FileText,
   Package,
   UserRound,
   Wallet,
   ClipboardList,
 } from "lucide-react";
-import { useRequisitionStore } from "../../components/ZustandShare/RequisitionZuts";
 import { useState } from "react";
+import RequisitionNoticeStatus from "./RequisitionNotice";
+import { useAuthStore } from "../../components/ZustandShare/AuthZuts";
+import NotesEvidence from "./IT_and_HOD_approved_role";
+import { RoleBasedRequisitionAcess } from "./IT_and_HOD_approved_role";
 
 function RequisitionDetails({
   selectedRequisition,
   selectedStatus,
+  setSelectedRequisition,
+  setIsOpenRightPanel
 }: any) {
   if (!selectedRequisition) return null;
 
 
+  const {currentUser} = useAuthStore()
 
 
+// const {ApproveRequisitions, UpdateRequisitions} = useRequisitionStore()
 
-const {ApproveRequisitions} = useRequisitionStore()
+
 const [loading, setLoading] = useState<boolean>(false)
+
+const [isNotes, setIsNotes] = useState<boolean>(false)
+
+const [Notes, setNotes] = useState<string>("")
 
 
   const requisition = selectedRequisition;
   const items = requisition.items ?? [];
 
   // Stores can only begin costing after HOD approval.
-  const hodApproved = [
-    "HOD_APPROVED",
-    "AUDIT_CERTIFIED",
-    "FINANCE_APPROVED",
-    "ISSUED",
-    "COMPLETED",
-  ].includes(requisition.status);
+const awaitingITVerification =
+  requisition.status === "AWAITING_IT_VERIFICATION";
+
+const itVerified = requisition.status === "IT_VERIFIED";
+
+const hodApproved = [
+  "HOD_APPROVED",
+  "AUDIT_CERTIFIED",
+  "FINANCE_APPROVED",
+  "ISSUED",
+  "COMPLETED",
+].includes(requisition.status);
 
   const completed = requisition.status === "COMPLETED";
   const rejected = requisition.status === "REJECTED";
@@ -99,56 +113,27 @@ const [loading, setLoading] = useState<boolean>(false)
   );
 
 
-  // Requisitiom Status
-  const notice = completed
-    ? {
-        title: "Requisition completed",
-        message:
-          "Items have been issued and the recipient has acknowledged receipt.",
-        icon: CheckCircle2,
-        style: "bg-emerald-50 text-emerald-800",
-      }
-    : rejected
-    ? {
-        title: "Requisition rejected",
-        message:
-          "This requisition has been rejected. Refer to the relevant review record for details.",
-        icon: FileText,
-        style: "bg-rose-50 text-rose-800",
-      }
-    : !hodApproved
-    ? {
-        title: "Awaiting HOD approval",
-        message:
-          "Stores costing cannot begin until the Head of Department approves this requisition.",
-        icon: Clock3,
-        style: "bg-amber-50 text-amber-800",
-      }
-    : requisition.status === "FINANCE_APPROVED"
-    ? {
-        title: "Awaiting Stores issuance",
-        message:
-          "Finance has approved this requisition. Stores must issue the items, and the recipient must acknowledge receipt before completion.",
-        icon: Package,
-        style: "bg-blue-50 text-blue-800",
-      }
-    : requisition.status === "ISSUED"
-    ? {
-        title: "Awaiting recipient acknowledgement",
-        message:
-          "Items have been issued. The recipient must acknowledge receipt before the requisition can be completed.",
-        icon: Clock3,
-        style: "bg-blue-50 text-blue-800",
-      }
-    : {
-        title: "Requisition in progress",
-        message:
-          "This requisition is being processed through the approval workflow.",
-        icon: ClipboardList,
-        style: "bg-slate-50 text-slate-700",
-      };
+const notice = RequisitionNoticeStatus({
+  requisition,
+  completed,
+  rejected,
+  hodApproved,
+  awaitingITVerification,
+  itVerified,
+});
+
+
 
   const NoticeIcon = notice.icon;
+
+
+
+//  Get NOTES
+const hasNotesEvidence = selectedRequisition?.notes
+
+
+
+
 
   return (
     <div className="mx-auto max-w-5xl space-y-7 text-slate-800">
@@ -306,72 +291,44 @@ const [loading, setLoading] = useState<boolean>(false)
           </span>
         </div>
 
-        {/* HOD APPROVAL REQUIREMENT */}
-        {!hodApproved && !rejected && (
-          <div className="flex items-start gap-3 rounded-lg bg-amber-50/80 p-3">
-            <Clock3
-              size={17}
-              className="mt-0.5 shrink-0 text-amber-700"
-            />
 
-            <div>
-              <p className="text-sm font-medium text-amber-900">
-                Costing is not available yet
-              </p>
-              <p className="mt-1 text-xs leading-5 text-amber-800">
-                The Head of Department must approve this requisition
-                before Stores can calculate unit costs and total costs.
-                Requested quantities remain available for review.
-              </p>
+{/* Role based access control for  */}
+
+{/* .................................................. */}
 
 
 
-           <Button
-  onClick={async () => {
-    try {
-      setLoading(true);
-      await ApproveRequisitions(selectedRequisition.id);
-    } catch (error) {
-      // Zustand handles the error
-    } finally {
-      setLoading(false);
-    }
-  }}
-  variant="outlined"
-  color="warning"
-  disabled={loading}
-  startIcon={
-    loading ? (
-      <CircularProgress size={14} color="inherit" />
-    ) : (
-      <CheckCircle2 size={16} />
-    )
-  }
-  sx={{
-    mt: 1,
-    textTransform: "none",
-    fontSize: "12px",
-    fontWeight: 600,
-    borderRadius: 2,
-    px: 2,
-    py: 0.75,
-    borderColor: "#fd7e02",
-    color: "#fd7e02",
-    "&:hover": {
-      backgroundColor: "#fff7ed",
-      borderColor: "#ea7000",
-    },
-    "&.Mui-disabled": {
-      borderColor: "#fed7aa",
-      color: "#fd7e02",
-    },
-  }}
->
-  {loading ? "Approving..." : "Approve Requisition"}
-</Button>
-            </div>
-          </div>
-        )}
+{/* IT subjects gives notes to provide evidence  */}
+
+{hasNotesEvidence && 
+<NotesEvidence hasNotesEvidence={hasNotesEvidence}
+selectedRequisition={selectedRequisition}
+currentUser={currentUser}
+/>
+}
+
+
+<RoleBasedRequisitionAcess 
+  currentUser = {currentUser}
+  selectedRequisition = {selectedRequisition}
+  hasNotesEvidence = {hasNotesEvidence}
+  setIsNotes = {setIsNotes}
+  loading = {loading}
+  isNotes  = {isNotes}
+  setLoading = {setLoading}
+  Notes = {Notes}
+  setNotes = {setNotes}
+  setSelectedRequisition = {setSelectedRequisition}
+  setIsOpenRightPanel={setIsOpenRightPanel}
+
+/>
+
+
+
+
+
+
+
 
         <div className="overflow-x-auto">
           <table className="w-full min-w-[680px] text-left">

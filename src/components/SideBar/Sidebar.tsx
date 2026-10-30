@@ -20,24 +20,17 @@ type SidebarProps = {
   setSidebarOpen: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
-
-
-
-
 const navigation = [
   {
     label: "Dashboard",
     to: "/dashboard",
     icon: LayoutDashboard,
+    roles: ["STAFF", "HOD", "STORES", "AUDIT", "FINANCE", "ADMIN", "IT_ADMIN"],
   },
-  // {
-  //   label: "My Requisitions",
-  //   to: "/my-requisitions",
-  //   icon: ClipboardList,
-  // },
   {
     label: "Requisitions",
     icon: ClipboardList,
+    roles: ["STAFF", "HOD", "STORES", "AUDIT", "FINANCE", "ADMIN", "IT_ADMIN"],
     children: [
       {
         label: "All Requisitions",
@@ -45,40 +38,41 @@ const navigation = [
       },
       {
         label: "Create Requisition",
-        to: "create-request",
+        to: "/create-request",
       },
     ],
   },
 
   // {
-  //   label: "Pending Approvals",
-  //   to: "/pending-approvals",
-  //   icon: Clock,
+  //   label: "Audit",
+  //   to: "/audit",
+  //   icon: ShieldCheck,
+  //   roles: ["AUDIT", "ADMIN"],
   // },
+
   {
     label: "Audit",
     to: "/audit",
     icon: ShieldCheck,
-    },
-  // {
-  //   label: "Test Sample",
-  //   to: "/test-sample",
-  //   icon: ShieldCheck,
-  // },
+    roles: ["AUDIT", "ADMIN", "IT_ADMIN"],
+  },
   {
     label: "Finance",
     to: "/finance",
     icon: Wallet,
+    roles: ["FINANCE", "ADMIN", "IT_ADMIN"],
   },
   {
     label: "Stores",
     to: "/stores",
     icon: Package,
+    roles: ["STORES", "ADMIN", "IT_ADMIN"],
   },
 
-  { 
+  {
     label: "Users",
     icon: Users,
+    roles: ["ADMIN", "IT_ADMIN"],
     children: [
       {
         label: "All Users",
@@ -90,15 +84,21 @@ const navigation = [
       },
     ],
   },
+
+  // Reports are currently restricted to administrators.
   {
     label: "Reports",
     to: "/reports",
     icon: BarChart3,
+    roles: ["STAFF", "HOD", "STORES", "AUDIT", "FINANCE", "ADMIN", "IT_ADMIN"],
   },
+
+  // Settings are currently restricted to administrators.
   {
     label: "Settings",
     to: "/settings",
     icon: Settings,
+    roles: ["ADMIN", "IT_ADMIN"],
   },
 ];
 
@@ -106,26 +106,22 @@ function SidebarComponent({
   sidebarOpen,
   setSidebarOpen,
 }: SidebarProps) {
-
-
-
-
-
-const {currentUser} = useAuthStore()
-
-
+  const { currentUser } = useAuthStore();
 
   const [openMenu, setOpenMenu] = useState<string | null>(null);
 
   const handleMenuToggle = (label: string) => {
-    setOpenMenu((current) =>
-      current === label ? null : label
-    );
+    setOpenMenu((current) => (current === label ? null : label));
   };
 
   const closeMobileSidebar = () => {
     setSidebarOpen(false);
   };
+
+  // Only show navigation items allowed for the logged-in user's role.
+  const visibleNavigation = navigation.filter((item) =>
+    item.roles.includes(currentUser?.role ?? "")
+  );
 
   return (
     <aside
@@ -143,25 +139,21 @@ const {currentUser} = useAuthStore()
       {/* Sidebar Header */}
       <div className="flex h-16 items-center justify-between border-b border-slate-100 px-5">
         <div>
-        <div className="flex flex-col gap-1">
-  <h1 className="text-base font-bold tracking-tight text-blue-900 mt-2">
-    {[
-      currentUser?.firstname,
-      currentUser?.middlename,
-      currentUser?.lastname,
-    ]
-      .filter(Boolean)
-      .join(" ")}
-  </h1>
+          <div className="flex flex-col gap-1">
+            <h1 className="mt-2 text-base font-bold tracking-tight text-blue-900">
+              {[
+                currentUser?.firstname,
+                currentUser?.middlename,
+                currentUser?.lastname,
+              ]
+                .filter(Boolean)
+                .join(" ")}
+            </h1>
 
-  <span className="w-fit rounded-md bg-orange-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-orange-600">
-    {currentUser?.role}
-  </span>
-</div>
-
-          {/* <p className="text-[11px] text-slate-500">
-            Internal Requisition System
-          </p> */}
+            <span className="w-fit rounded-md bg-orange-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-orange-600">
+              {currentUser?.role}
+            </span>
+          </div>
         </div>
 
         <button
@@ -176,7 +168,7 @@ const {currentUser} = useAuthStore()
 
       {/* Navigation */}
       <nav className="space-y-1 p-3">
-        {navigation.map((item) => {
+        {visibleNavigation.map((item) => {
           const Icon = item.icon;
           const hasChildren = Boolean(item.children?.length);
           const isOpen = openMenu === item.label;

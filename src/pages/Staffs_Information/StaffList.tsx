@@ -1,7 +1,6 @@
 
 import DataTable from "../../utils/DataGridTable";
 import { type GridColDef } from "@mui/x-data-grid";
-
 import { useStaffStore } from "../../components/ZustandShare/StaffZuts";
 import { useEffect, useState } from "react";
 
@@ -16,27 +15,30 @@ import {
 } from "lucide-react";
 
 import * as XLSX from "xlsx";
-
 import IsLoadingShow, { Filters } from "../../utils/utils";
 
-import {
-  Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-} from "@mui/material";
+import { Button } from "@mui/material";
+import ModalOpen from "../../components/Modal/Modal";
+import { isCookie } from "react-router-dom";
+import UserRightPanel from "./StaffRightPanel";
 
 function StaffList() {
-  const { GetStaff, Staff } = useStaffStore();
+  const { GetStaff, Staff, UploadStaff } = useStaffStore();
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [openImport, setOpenImport] = useState<boolean>(false);
-  const [file, setFile] = useState<File | null>(null);
-
-  const [excelColumns, setExcelColumns] = useState<string[]>([]);
-  const [excelRows, setExcelRows] = useState<any[][]>([]);
   const [isReading, setIsReading] = useState<boolean>(false);
+
+  const [file, setFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState<any[]>([]);
+  const [loading, setLoading] = useState<boolean>(false)
+
+const [selectedUser, setSelectedUser] = useState<any>(null);
+
+  const [isOpen, setIsOpen] = useState<boolean>(false);
+
+
+
 
   // STAFF TABLE ROWS
   const rows = Staff.map((staff: any) => ({
@@ -135,7 +137,7 @@ function StaffList() {
     LoadUsers();
   }, []);
 
-  // READ EXCEL FILE AND GET ACTUAL COLUMNS
+  // READ EXCEL AND CONVERT TO ARRAY OF OBJECTS
   async function HandleFileChange(
     e: React.ChangeEvent<HTMLInputElement>
   ) {
@@ -162,63 +164,33 @@ function StaffList() {
     try {
       setIsReading(true);
 
-      // Read the selected file
-      const buffer = await selectedFile.arrayBuffer();
+      const workbook = XLSX.read(
+        await selectedFile.arrayBuffer()
+      );
 
-      // Open the Excel workbook
-      const workbook = XLSX.read(buffer, {
-        type: "array",
-      });
-
-      // Get the first worksheet
-      const firstSheetName = workbook.SheetNames[0];
-
-      if (!firstSheetName) {
-        alert("This Excel file contains no worksheets.");
-        return;
-      }
-
-      const worksheet = workbook.Sheets[firstSheetName];
+      const worksheet =
+        workbook.Sheets[workbook.SheetNames[0]];
 
       if (!worksheet) {
-        alert("Could not read the worksheet.");
+        alert("Could not read the Excel worksheet.");
         return;
       }
 
-      // Convert worksheet into an array of rows
-      const allRows: any[][] = XLSX.utils.sheet_to_json(
-        worksheet,
-        {
-          header: 1,
-          defval: "",
-          raw: false,
-        }
-      );
+      const data = XLSX.utils.sheet_to_json(worksheet, {
+        defval: "",
+      });
 
-      if (allRows.length === 0) {
-        alert("The worksheet is empty.");
+      if (data.length === 0) {
+        alert("The Excel file contains no data.");
         return;
       }
-
-      // First row contains the actual Excel headings
-      const headings = allRows[0].map((column: any) =>
-        String(column).trim()
-      );
-
-      // Remaining rows contain the data
-      const dataRows = allRows.slice(1).filter((row) =>
-        row.some(
-          (cell: any) => String(cell).trim() !== ""
-        )
-      );
 
       setFile(selectedFile);
-      setExcelColumns(headings);
-      setExcelRows(dataRows);
+      setPreview(data);
 
-      console.log("Excel worksheet:", firstSheetName);
-      console.log("Actual Excel columns:", headings);
-      console.log("Excel data rows:", dataRows);
+      console.log("Excel data:", data);
+
+
     } catch (error) {
       console.error("Excel reading error:", error);
       alert("Could not read this Excel file.");
@@ -227,38 +199,42 @@ function StaffList() {
     }
   }
 
-  // CLOSE DIALOG AND CLEAR SELECTION
+  // CLOSE MODAL AND CLEAR DATA
   function HandleCloseImport() {
     setOpenImport(false);
     setFile(null);
-    setExcelColumns([]);
-    setExcelRows([]);
+    setPreview([]);
   }
 
-  // PREPARE FILE FOR BACKEND UPLOAD LATER
-  function HandleUpload() {
-    if (!file) {
-      alert("Please select an Excel file.");
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append("file", file);
-
-    console.log("Selected file:", file.name);
-    console.log("Excel columns:", excelColumns);
-    console.log("Excel rows:", excelRows);
-    console.log("FormData prepared:", formData);
-
-    // Backend API connection comes next.
+async function HandleUpload() {
+  if (preview.length === 0) {
+    alert("Please select an Excel file.");
+    return;
   }
+
+  try {
+    setLoading(true);
+    await UploadStaff(preview);
+
+console.log(preview)
+
+  } catch (error) {
+    console.error("Failed to import staff:", error);
+  } finally {
+    setLoading(false);
+  }
+}
 
   if (isLoading) {
     return <IsLoadingShow text="users" />;
   }
 
+  // EXCEL PREVIEW COLUMNS
+  const previewColumns = Object.keys(preview[0] || {});
+
   return (
     <div className="space-y-5 bg-white">
+
       {/* PAGE HEADER */}
       <div>
         <p className="flex flex-wrap items-center justify-between gap-3 bg-green-50 p-2 text-xs text-green-600">
@@ -271,7 +247,14 @@ function StaffList() {
             color="success"
             size="small"
             startIcon={<Import size={15} />}
-            onClick={() => setOpenImport(true)}
+            onClick={() => 
+            
+              {
+              setOpenImport(true)
+
+              }
+
+            }
             sx={{
               textTransform: "none",
               fontSize: "10px",
@@ -293,149 +276,174 @@ function StaffList() {
         rows={rows}
         columns={columns}
         loading={isLoading}
+
+
+    onRowClick={(params: any) => {
+  setSelectedUser(params.row);
+  setIsOpen(true);
+}}
       />
 
-      {/* IMPORT DIALOG */}
-      <Dialog
-        open={openImport}
+      {/* IMPORT MODAL */}
+      <ModalOpen
+        isOpen={openImport}
         onClose={HandleCloseImport}
-        fullWidth
-        maxWidth="md"
+        title="Import staff"
+        showHeader={true}
+        modalClassName="w-[650px] max-w-[95vw]"
       >
-        <DialogTitle sx={{ fontSize: 15, py: 1.5 }}>
-          Import Users
-        </DialogTitle>
+        <div className="space-y-3">
 
-        <DialogContent dividers>
-          <p className="mb-3 text-xs text-gray-500">
-            Select an Excel file to view its actual column headings
-            and data before importing.
+          <p className="text-xs text-gray-500">
+            Select an Excel file to preview staff records before importing.
           </p>
 
-          <div className="rounded-md border border-dashed border-gray-300 p-3">
-            <div className="mb-2 flex items-center gap-2">
-              <FileSpreadsheet
-                size={20}
-                className="text-green-600"
-              />
+          {/* FILE SELECTION */}
+          <label
+            htmlFor="staff-excel"
+            className="flex cursor-pointer flex-col items-center rounded-md border border-dashed border-gray-300 px-3 py-5 text-center transition hover:border-green-600 hover:bg-green-50/30"
+          >
+            <FileSpreadsheet
+              size={25}
+              className="mb-2 text-green-600"
+            />
 
-              <span className="text-xs font-medium">
-                Excel file
-              </span>
-            </div>
+            <span className="text-sm font-medium text-gray-800">
+              Choose Excel file
+            </span>
+
+            <span className="mt-1 text-xs text-gray-500">
+              XLSX or XLS · Maximum 5 MB
+            </span>
+
+            <span className="mt-3 rounded border border-gray-300 px-3 py-1.5 text-xs text-gray-700">
+              Browse files
+            </span>
 
             <input
+              id="staff-excel"
               type="file"
               accept=".xlsx,.xls"
               onChange={HandleFileChange}
-              className="block w-full text-xs"
+              className="hidden"
             />
+          </label>
 
-            <p className="mt-2 text-xs text-gray-500">
-              .xlsx or .xls · Maximum 5 MB
-            </p>
-          </div>
-
+          {/* SELECTED FILE */}
           {file && (
-            <p className="mt-3 break-all text-xs text-gray-600">
-              Selected: {file.name}
-            </p>
-          )}
+            <div className="flex items-center gap-2 rounded border border-gray-200 p-2">
+              <FileSpreadsheet
+                size={18}
+                className="shrink-0 text-green-600"
+              />
 
-          {isReading && (
-            <p className="mt-3 text-xs text-blue-600">
-              Reading Excel columns and rows...
-            </p>
-          )}
-
-          {/* EXCEL PREVIEW */}
-          {excelColumns.length > 0 && !isReading && (
-            <div className="mt-4">
-              <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                <p className="text-xs font-semibold">
-                  Excel Preview
+              <div className="min-w-0">
+                <p className="truncate text-xs font-medium text-gray-800">
+                  {file.name}
                 </p>
 
                 <p className="text-xs text-gray-500">
-                  {excelColumns.length} columns · {excelRows.length} rows
+                  {(file.size / 1024).toFixed(1)} KB
+                </p>
+              </div>
+            </div>
+          )}
+
+          {isReading && (
+            <p className="text-xs text-gray-500">
+              Reading Excel file...
+            </p>
+          )}
+
+          {/* PREVIEW TABLE */}
+          {preview.length > 0 && !isReading && (
+            <div>
+              <div className="mb-2 flex items-center justify-between">
+                <p className="text-xs font-semibold text-gray-800">
+                  Data preview
+                </p>
+
+                <p className="text-xs text-gray-500">
+                  {preview.length} records
                 </p>
               </div>
 
-              <div className="max-h-72 overflow-auto rounded border border-gray-200">
+              <div className="max-h-60 overflow-auto rounded border border-gray-200">
                 <table className="w-full border-collapse text-xs">
-                  <thead className="sticky top-0 bg-gray-100">
+                  <thead className="sticky top-0 bg-gray-50">
                     <tr>
-                      {excelColumns.map((column, index) => (
+                      {previewColumns.map((column) => (
                         <th
-                          key={index}
-                          className="whitespace-nowrap border-b border-r border-gray-200 px-3 py-2 text-left font-semibold"
+                          key={column}
+                          className="whitespace-nowrap border-b border-r border-gray-200 px-3 py-2 text-left font-medium text-gray-600"
                         >
-                          {column || `Column ${index + 1}`}
+                          {column}
                         </th>
                       ))}
                     </tr>
                   </thead>
 
                   <tbody>
-                    {excelRows.slice(0, 5).map((row, rowIndex) => (
-                      <tr key={rowIndex}>
-                        {excelColumns.map((_, columnIndex) => (
+                    {preview.slice(0, 5).map((row, index) => (
+                      <tr key={index} className="hover:bg-gray-50">
+                        {previewColumns.map((column) => (
                           <td
-                            key={columnIndex}
-                            className="whitespace-nowrap border-b border-r border-gray-100 px-3 py-2"
+                            key={column}
+                            className="whitespace-nowrap border-b border-r border-gray-100 px-3 py-2 text-gray-700"
                           >
-                            {String(row[columnIndex] ?? "")}
+                            {String(row[column] ?? "")}
                           </td>
                         ))}
                       </tr>
                     ))}
-
-                    {excelRows.length === 0 && (
-                      <tr>
-                        <td
-                          colSpan={Math.max(excelColumns.length, 1)}
-                          className="px-3 py-4 text-center text-gray-500"
-                        >
-                          No data rows found.
-                        </td>
-                      </tr>
-                    )}
                   </tbody>
                 </table>
               </div>
 
-              {excelRows.length > 5 && (
-                <p className="mt-2 text-xs text-gray-500">
-                  Showing the first 5 of {excelRows.length} rows.
+              {preview.length > 5 && (
+                <p className="mt-1 text-xs text-gray-500">
+                  Showing 5 of {preview.length} records.
                 </p>
               )}
             </div>
           )}
-        </DialogContent>
 
-        <DialogActions sx={{ px: 2, py: 1 }}>
-          <Button
-            size="small"
-            color="inherit"
-            onClick={HandleCloseImport}
-            sx={{ textTransform: "none" }}
-          >
-            Cancel
-          </Button>
+          {/* ACTION BUTTONS */}
+          <div className="flex justify-end gap-2 border-t border-gray-200 pt-3">
+            <Button
+              size="small"
+              color="inherit"
+              onClick={HandleCloseImport}
+              sx={{ textTransform: "none", fontSize: 12 }}
+            >
+              Cancel
+            </Button>
+<Button
+  size="small"
+  variant="contained"
+  onClick={HandleUpload}
+  color="warning"
+  disableElevation
+  disabled={!preview.length || isReading || loading}
+  sx={{ textTransform: "none", fontSize: 12 }}
+>
+  {loading ? "Importing..." : "Import Users"}
+</Button>
+          </div>
 
-          <Button
-            size="small"
-            variant="contained"
-            color="warning"
-            disableElevation
-            disabled={!file || isReading}
-            onClick={HandleUpload}
-            sx={{ textTransform: "none" }}
-          >
-            Upload Excel
-          </Button>
-        </DialogActions>
-      </Dialog>
+        </div>
+      </ModalOpen>
+
+
+
+   {/* User Right Panel */}
+{selectedUser && (
+  <UserRightPanel
+    open={isOpen}
+    onClose={() => setIsOpen(false)}
+    user={selectedUser}
+  />
+)}
     </div>
   );
 }

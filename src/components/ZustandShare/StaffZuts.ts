@@ -1,3 +1,4 @@
+
 import {create} from "zustand"
 import type { StaffFormData } from "../../GlobalTypes"
 import API, { handleAxiosError } from "../configuration/API"
@@ -9,7 +10,8 @@ type StaffType = {
 Staff: StaffFormData[],
 GetStaff: () => Promise<void>
 CreateStaff: (data:StaffFormData) => Promise<void> 
-UpdateStaff: (id:string) => Promise<void> 
+UploadStaff: (data:StaffFormData[]) => Promise<void>
+UpdateStaff: (data:StaffFormData) => Promise<void> 
 DeleteStaff: () => Promise<void>
 
 }
@@ -53,19 +55,14 @@ set ({
     },
 
 
-
-    UpdateStaff:  async (id:string) => {
-        
+    UploadStaff: async (data:StaffFormData[]) => {
         try {
-            const response = await API.put(`/users/:${id}`)
-            
-set ((state)=>(
-    {
-        Staff: state.Staff.map((staff)=>(
-            staff.id === id ? {...staff, ...response.data} :staff
-        ))
-    }
-))
+
+            const response = await API.post("/users-upload", data)
+
+            toast.success(response.data.message)
+
+            await useStaffStore.getState().GetStaff()
 
         } catch (error:any){
             handleAxiosError(error)
@@ -73,15 +70,34 @@ set ((state)=>(
     },
 
 
+    UpdateStaff:  async (staff:StaffFormData) => {
+        
+        try {
+
+            const response = await API.put(`/update-users`, staff)
+
+set((state)=>({
+    Staff: state.Staff.map((updatedStaff:StaffFormData)=>{
+        return (
+            updatedStaff.id === staff.id ? {...updatedStaff, 
+                ...response.data.data
+            } : updatedStaff
+        )
+    })
+}
+
+))
+
+
+toast.success (response.data.message)
+        } catch (error:any){
+            handleAxiosError(error)
+        }
+    },
+
 
     DeleteStaff: async () => {
 
     }
-
-
-
-
-
-
 
 }))

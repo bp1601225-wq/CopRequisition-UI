@@ -34,7 +34,9 @@ export interface StaffFormData  {
   email:string
   // positionId: string;
   // unitId: string;
-  role: "STAFF"|"HOD"|"STORES"|"AUDIT"|"FINANCE"|"ADMIN";
+  role: "STAFF"|"HOD"|"STORES"|"AUDIT"|"FINANCE"|"ADMIN"
+  |"IT_ADMIN"
+  ;
   password: string;
   confirmPassword?: string;
 };
@@ -47,7 +49,9 @@ quantityRequested: number;
 
 
 export interface RequisitionFormData {
+  id?:string
 reason: string;
+requisitionType?: "TONER" | "GENERALS" 
 items: RequisitionItemForm[];
 };
 
