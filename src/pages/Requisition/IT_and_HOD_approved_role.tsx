@@ -336,7 +336,8 @@ backgroundColor: "#1d4ed8",
 
   {/* {(isHOD || isITAdmin) && isEvidenceNotIncluded && ( */}
 
-  {(isHOD || isITAdmin) && isEvidenceNotIncluded || isSubmitted && (
+{(isHOD || isITAdmin) && isSubmitted && isEvidenceNotIncluded && (
+  
   <Button
 onClick={async () => {
 try {

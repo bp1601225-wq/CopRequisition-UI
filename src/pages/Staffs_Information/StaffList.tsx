@@ -12,6 +12,7 @@ import {
   Mail,
   Import,
   FileSpreadsheet,
+  Search,
 } from "lucide-react";
 
 import * as XLSX from "xlsx";
@@ -210,7 +211,7 @@ async function HandleUpload() {
   if (preview.length === 0) {
     alert("Please select an Excel file.");
     return;
-  }
+  } 
 
   try {
     setLoading(true);
@@ -265,11 +266,55 @@ console.log(preview)
           </Button>
         </p>
       </div>
+<div className="mb-4 rounded-lg border border-slate-200 bg-white p-4">
+  <fieldset>
+    <legend className="px-2 text-sm font-semibold text-slate-700">
+      Search & Filter Staff
+    </legend>
 
-      {/* SEARCH AND FILTERS */}
-      <div>
-        <Filters legendLabel="Filter by phone, username, email, or status" />
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
+
+      {/* Search by surname */}
+      <div className="sm:col-span-2">
+        <div className="relative">
+          <Search
+            size={16}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+          />
+          <input
+            type="text"
+            placeholder="Enter surname..."
+            className="w-full rounded-md border border-slate-300 py-2 pl-9 pr-3 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+          />
+        </div>
       </div>
+
+      {/* Account Status */}
+      <div className="sm:col-span-1">
+        <select className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500">
+          <option value="ALL">All Statuses</option>
+          <option value="ACTIVE">Active</option>
+          <option value="INACTIVE">Inactive</option>
+        </select>
+      </div>
+
+      {/* Role */}
+      <div className="sm:col-span-1">
+        <select className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500">
+          <option value="ALL">All Roles</option>
+          <option value="STAFF">Staff</option>
+          <option value="HOD">HOD</option>
+          <option value="STORES">Stores</option>
+          <option value="AUDIT">Audit</option>
+          <option value="FINANCE">Finance</option>
+          <option value="ADMIN">Admin</option>
+          <option value="IT_ADMIN">IT Admin</option>
+        </select>
+      </div>
+
+    </div>
+  </fieldset>
+</div>
 
       {/* STAFF TABLE */}
       <DataTable

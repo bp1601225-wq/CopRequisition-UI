@@ -2,16 +2,18 @@ import { useState } from "react";
 import { Button } from "@mui/material";
 import {
   FileText,
+  ShieldCheck,
   SlidersHorizontal,
 } from "lucide-react";
 
 import ComprehensiveReports from "./Comprehensive";
 import CustomReports from "./Customs";
+import RequisitionTracking from "./TrackingActivities";
 
 
 function Reports() {
   const [selected, setSelected] = useState<
-    "comprehensive" | "custom"
+    "comprehensive" | "custom" | "Tracking"
   >("comprehensive");
 
   return (
@@ -66,7 +68,7 @@ function Reports() {
                   ? "contained"
                   : "outlined"
               }
-              color="warning"
+              color="success"
               startIcon={<SlidersHorizontal size={15} />}
               sx={{
                 textTransform: "none",
@@ -79,6 +81,28 @@ function Reports() {
             >
               Custom Report
             </Button>
+
+                 {/* <Button
+              onClick={() => setSelected("Tracking")}
+              variant={
+                selected === "Tracking"
+                  ? "contained"
+                  : "outlined"
+              }
+              color="primary"
+              startIcon={<ShieldCheck size={15} />}
+              sx={{
+                textTransform: "none",
+                fontSize: 11,
+                px: 2,
+                py: 0.9,
+                boxShadow: "none",
+                borderRadius: 1.5,
+              }}
+            >
+              Track Report
+            </Button> */}
+
 
           </div>
         </div>
@@ -95,6 +119,11 @@ function Reports() {
 <CustomReports />
 )}
 
+        {/* {selected === "Tracking" && (
+<RequisitionTracking />
+)} */}
+  
+  
       </div>
     </div>
   );
